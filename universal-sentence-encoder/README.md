@@ -6,7 +6,7 @@ This module is a TensorFlow.js [`GraphModel`](https://js.tensorflow.org/api/late
 
 In [this demo](./demo/index.js) we embed six sentences with the USE, and render their self-similarity scores in a matrix (redder means more similar):
 
-![selfsimilarity](./images/self_similarity.jpg)
+![selfsimilarity](https://storage.googleapis.com/tfjs-models/assets/use/self_similarity.jpg)
 
 *The matrix shows that USE embeddings can be used to cluster sentences by similarity.*
 
@@ -25,7 +25,7 @@ This module is a lightweight TensorFlow.js [`GraphModel`](https://js.tensorflow.
 
 In [this demo](./demo/index.js) we embed a question and three answers with the USE QnA, and render their their scores:
 
-![QnA scores](./images/qna_score.png)
+![QnA scores](https://storage.googleapis.com/tfjs-models/assets/use/qna_score.png)
 
 *The scores show how well each answer fits the question.*
 
@@ -44,6 +44,7 @@ Using `npm`:
 To import in npm:
 
 ```js
+require('@tensorflow/tfjs');
 const use = require('@tensorflow-models/universal-sentence-encoder');
 ```
 
@@ -71,6 +72,8 @@ use.load().then(model => {
   });
 });
 ```
+
+`load()` accepts an optional configuration object where you can set custom `modelUrl` and/or `vocabUrl` strings (e.g. `use.load({modelUrl: '', vocabUrl: ''})`).
 
 To use the Tokenizer separately:
 
@@ -107,30 +110,29 @@ use.loadQnA().then(model => {
     ]
   };
   var scores = [];
-  model.embed(input).then(embeddings => {
-    /*
-     * The output of the embed method is an object with two keys:
-     * {
-     *   queryEmbedding: tf.Tensor;
-     *   responseEmbedding: tf.Tensor;
-     * }
-     * queryEmbedding is a tensor containing embeddings for all queries.
-     * responseEmbedding is a tensor containing embeddings for all answers.
-     * You can call `arraySync()` to retrieve the values of the tensor.
-     * In this example, embed_query[0] is the embedding for the query
-     * 'How are you feeling today?'
-     * And embed_responses[0] is the embedding for the answer
-     * 'I\'m not feeling very well.'
-     */
-    const embed_query = embeddings['queryEmbedding'].arraySync();
-    const embed_responses = embeddings['responseEmbedding'].arraySync();
-    // compute the dotProduct of each query and response pair.
-    for (let i = 0; i < input['queries'].length; i++) {
-      for (let j = 0; j < input['responses'].length; j++) {
-        scores.push(dotProduct(embed_query[i], embed_responses[j]));
-      }
+  const embeddings = model.embed(input);
+  /*
+    * The output of the embed method is an object with two keys:
+    * {
+    *   queryEmbedding: tf.Tensor;
+    *   responseEmbedding: tf.Tensor;
+    * }
+    * queryEmbedding is a tensor containing embeddings for all queries.
+    * responseEmbedding is a tensor containing embeddings for all answers.
+    * You can call `arraySync()` to retrieve the values of the tensor.
+    * In this example, embed_query[0] is the embedding for the query
+    * 'How are you feeling today?'
+    * And embed_responses[0] is the embedding for the answer
+    * 'I\'m not feeling very well.'
+    */
+  const embed_query = embeddings['queryEmbedding'].arraySync();
+  const embed_responses = embeddings['responseEmbedding'].arraySync();
+  // compute the dotProduct of each query and response pair.
+  for (let i = 0; i < input['queries'].length; i++) {
+    for (let j = 0; j < input['responses'].length; j++) {
+      scores.push(dotProduct(embed_query[i], embed_responses[j]));
     }
-  });
+  }
 });
 
 // Calculate the dot product of two vector arrays.

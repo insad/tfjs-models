@@ -14,8 +14,11 @@
  * limitations under the License.
  * =============================================================================
  */
+import '@tensorflow/tfjs-backend-cpu';
+import '@tensorflow/tfjs-backend-webgl';
 
 import * as use from '@tensorflow-models/universal-sentence-encoder';
+import * as tf from '@tensorflow/tfjs-core';
 import {interpolateReds} from 'd3-scale-chromatic';
 
 const sentences = [
@@ -54,12 +57,13 @@ const init = async () => {
     yLabelsContainer.appendChild(labelYDom);
 
     for (let j = i; j < sentences.length; j++) {
-      const sentenceI = embeddings.slice([i, 0], [1]);
-      const sentenceJ = embeddings.slice([j, 0], [1]);
+      const sentenceI = tf.slice(embeddings, [i, 0], [1]);
+      const sentenceJ = tf.slice(embeddings, [j, 0], [1]);
       const sentenceITranspose = false;
       const sentenceJTransepose = true;
       const score =
-          sentenceI.matMul(sentenceJ, sentenceITranspose, sentenceJTransepose)
+          tf.matMul(
+                sentenceI, sentenceJ, sentenceITranspose, sentenceJTransepose)
               .dataSync();
 
       ctx.fillStyle = interpolateReds(score);
@@ -78,7 +82,7 @@ const initQnA = async () => {
   };
   const model = await use.loadQnA();
   document.querySelector('#loadingQnA').style.display = 'none';
-  let result = await model.embed(input);
+  let result = model.embed(input);
   const query = result['queryEmbedding'].arraySync();
   const answers = result['responseEmbedding'].arraySync();
   for (let i = 0; i < answers.length; i++) {

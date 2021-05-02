@@ -108,14 +108,13 @@ export class ObjectDetection {
   private async infer(
       img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|
       HTMLVideoElement,
-      maxNumBoxes: number, 
-      minScore: number): Promise<DetectedObject[]> {
+      maxNumBoxes: number, minScore: number): Promise<DetectedObject[]> {
     const batched = tf.tidy(() => {
       if (!(img instanceof tf.Tensor)) {
         img = tf.browser.fromPixels(img);
       }
       // Reshape to a single-element batch so we can pass it to executeAsync.
-      return img.expandDims(0);
+      return tf.expandDims(img);
     });
     const height = batched.shape[1];
     const width = batched.shape[2];
@@ -139,7 +138,9 @@ export class ObjectDetection {
 
     const prevBackend = tf.getBackend();
     // run post process in cpu
-    tf.setBackend('cpu');
+    if (tf.getBackend() === 'webgl') {
+      tf.setBackend('cpu');
+    }
     const indexTensor = tf.tidy(() => {
       const boxes2 =
           tf.tensor2d(boxes, [result[1].shape[1], result[1].shape[3]]);
@@ -151,7 +152,9 @@ export class ObjectDetection {
     indexTensor.dispose();
 
     // restore previous backend
-    tf.setBackend(prevBackend);
+    if (prevBackend !== tf.getBackend()) {
+      tf.setBackend(prevBackend);
+    }
 
     return this.buildDetectedObjects(
         width, height, boxes, maxScores, indexes, classes);
@@ -219,8 +222,7 @@ export class ObjectDetection {
   async detect(
       img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|
       HTMLVideoElement,
-      maxNumBoxes = 20,
-      minScore = 0.5): Promise<DetectedObject[]> {
+      maxNumBoxes = 20, minScore = 0.5): Promise<DetectedObject[]> {
     return this.infer(img, maxNumBoxes, minScore);
   }
 
